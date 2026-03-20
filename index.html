@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Compilatore Verbale</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- ============ PANNELLO (Ribbon stile Office) ============ -->
+    <header id="ribbon">
+        <!-- Riga tab -->
+        <nav id="ribbon-tabs">
+            <div class="tabs-row">
+                <button class="tab active" data-tab="unita">Unit&agrave;</button>
+                <button class="tab" data-tab="vano">Vano</button>
+                <button class="tab" data-tab="elemento">Elemento</button>
+                <button class="tab" data-tab="posizione">Posizione</button>
+                <button class="tab" data-tab="fenomeno">Fenomeno</button>
+                <button class="tab" data-tab="andamento">Andamento</button>
+                <button class="tab" data-tab="foto">Foto</button>
+                <button class="tab" data-tab="finalizza">Finalizza</button>
+            </div>
+            <button id="btn-sync" title="Sincronizza">
+                <span class="sync-icon">&#9729;</span>
+            </button>
+        </nav>
+
+        <!-- Area comandi (cambia per ogni tab) -->
+        <div id="ribbon-content">
+
+            <!-- TAB: Unit&agrave; -->
+            <div class="tab-panel active" data-panel="unita">
+                <div class="field-group">
+                    <label>Tipo</label>
+                    <div class="btn-row">
+                        <button class="cmd unit-type" data-value="Abitazione">Abitazione</button>
+                        <button class="cmd unit-type" data-value="Ufficio">Ufficio</button>
+                        <button class="cmd unit-type" data-value="Negozio">Negozio</button>
+                        <button class="cmd unit-type" data-value="Garage">Garage</button>
+                        <button class="cmd unit-type" data-value="Cantina">Cantina</button>
+                        <button class="cmd unit-type" data-value="Soffitta">Soffitta</button>
+                        <button class="cmd unit-type" data-value="Parti Comuni">Parti Comuni</button>
+                    </div>
+                </div>
+                <div class="field-group">
+                    <label>Piano</label>
+                    <input type="text" id="input-piano" placeholder="es. 2">
+                </div>
+                <div class="field-group">
+                    <label>Sub.</label>
+                    <input type="text" id="input-sub" placeholder="es. 15">
+                </div>
+                <div class="field-group">
+                    <label>Interno</label>
+                    <input type="text" id="input-interno" placeholder="es. 3">
+                </div>
+                <div class="field-group">
+                    <label>Propriet&agrave;</label>
+                    <input type="text" id="input-proprieta" placeholder="Nome Cognome">
+                </div>
+                <div class="field-group">
+                    <button class="cmd primary" id="btn-cappello">Inserisci Cappello</button>
+                </div>
+            </div>
+
+            <!-- TAB: Vano -->
+            <div class="tab-panel" data-panel="vano">
+                <div class="field-group">
+                    <button class="cmd primary" id="btn-nuovo-vano">+ Nuovo Vano</button>
+                </div>
+                <div class="field-group">
+                    <label>Destinazione</label>
+                    <div class="btn-row">
+                        <button class="cmd dest-btn" data-value="Ingresso">INGRESSO</button>
+                        <button class="cmd dest-btn" data-value="Stanza">STANZA</button>
+                        <button class="cmd dest-btn" data-value="Disimpegno">DISIMPEGNO</button>
+                        <button class="cmd dest-btn" data-value="Corridoio">CORRIDOIO</button>
+                        <button class="cmd dest-btn" data-value="Bagno">BAGNO</button>
+                        <button class="cmd dest-btn" data-value="Soggiorno">SOGGIORNO</button>
+                        <button class="cmd dest-btn" data-value="Salone">SALONE</button>
+                        <button class="cmd dest-btn" data-value="Cucina">CUCINA</button>
+                        <button class="cmd dest-btn" data-value="Deposito">DEPOSITO</button>
+                        <button class="cmd dest-btn" data-value="Ufficio">UFFICIO</button>
+                    </div>
+                </div>
+                <div class="field-group">
+                    <label>Pre-check</label>
+                    <div class="btn-row">
+                        <button class="cmd precheck-btn" data-value="C/S">C/S</button>
+                        <button class="cmd precheck-btn" data-value="NDR">NDR</button>
+                        <button class="cmd precheck-btn" data-value="non visibile">Non Visibile</button>
+                        <button class="cmd precheck-btn" data-value="ingombra">Ingombra</button>
+                        <button class="cmd precheck-btn" data-value="parzialmente ingombra">Parz. Ingombra</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: Elemento -->
+            <div class="tab-panel" data-panel="elemento">
+                <div class="field-group">
+                    <div class="btn-row">
+                        <button class="cmd elem-btn" data-value="Parete A" data-type="parete">Parete A</button>
+                        <button class="cmd elem-btn" data-value="Parete B" data-type="parete">Parete B</button>
+                        <button class="cmd elem-btn" data-value="Parete C" data-type="parete">Parete C</button>
+                        <button class="cmd elem-btn" data-value="Parete D" data-type="parete">Parete D</button>
+                    </div>
+                </div>
+                <div class="field-group">
+                    <div class="btn-row">
+                        <button class="cmd elem-btn" data-value="Soffitto" data-type="soffitto">Soffitto</button>
+                        <button class="cmd elem-btn" data-value="Pavimento" data-type="pavimento">Pavimento</button>
+                        <button class="cmd elem-btn" data-value="Balcone" data-type="balcone">Balcone</button>
+                        <button class="cmd elem-btn" data-value="Cornice" data-type="cornice">Cornice</button>
+                    </div>
+                </div>
+                <div class="field-group">
+                    <label>Infisso</label>
+                    <div class="btn-row">
+                        <button class="cmd infisso-btn" data-value="Finestra">Finestra</button>
+                        <button class="cmd infisso-btn" data-value="Porta finestra">Porta finestra</button>
+                        <button class="cmd infisso-btn" data-value="Porta interna">Porta interna</button>
+                        <button class="cmd infisso-btn" data-value="Porta ingresso">Porta ingresso</button>
+                        <button class="cmd infisso-btn" data-value="Apertura">Apertura</button>
+                        <button class="cmd infisso-btn" data-value="Apertura ad arco">Apertura ad arco</button>
+                        <button class="cmd infisso-btn" data-value="Lucernario">Lucernario</button>
+                    </div>
+                </div>
+                <!-- Sub-panel per selezione parete infisso -->
+                <div class="field-group" id="infisso-wall-select" style="display:none;">
+                    <label>Parete infisso</label>
+                    <div class="btn-row">
+                        <button class="cmd infisso-wall-btn" data-value="Parete A">Parete A</button>
+                        <button class="cmd infisso-wall-btn" data-value="Parete B">Parete B</button>
+                        <button class="cmd infisso-wall-btn" data-value="Parete C">Parete C</button>
+                        <button class="cmd infisso-wall-btn" data-value="Parete D">Parete D</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: Posizione (dinamica, riempita da JS) -->
+            <div class="tab-panel" data-panel="posizione">
+                <div id="posizione-content">
+                    <p class="hint">Seleziona un elemento per vedere le posizioni</p>
+                </div>
+            </div>
+
+            <!-- TAB: Fenomeno (dinamica, riempita da JS) -->
+            <div class="tab-panel" data-panel="fenomeno">
+                <div id="fenomeno-content">
+                    <p class="hint">Seleziona un elemento per vedere i fenomeni</p>
+                </div>
+            </div>
+
+            <!-- TAB: Andamento -->
+            <div class="tab-panel" data-panel="andamento">
+                <div class="field-group">
+                    <label>Orientamento</label>
+                    <div class="btn-row">
+                        <button class="cmd anda-btn" data-value="VT">VT</button>
+                        <button class="cmd anda-btn" data-value="OZ">OZ</button>
+                        <button class="cmd anda-btn" data-value="DG">DG</button>
+                        <button class="cmd anda-btn" data-value="DG alto SX">DG alto SX</button>
+                        <button class="cmd anda-btn" data-value="DG alto DX">DG alto DX</button>
+                        <button class="cmd anda-btn" data-value="DG basso SX">DG basso SX</button>
+                        <button class="cmd anda-btn" data-value="DG basso DX">DG basso DX</button>
+                        <button class="cmd anda-btn" data-value="pseudo VT">pseudo VT</button>
+                        <button class="cmd anda-btn" data-value="pseudo OZ">pseudo OZ</button>
+                        <button class="cmd anda-btn" data-value="trasversale">trasversale</button>
+                        <button class="cmd anda-btn" data-value="a tutta H">a tutta H</button>
+                        <button class="cmd anda-btn" data-value="breve estensione">breve estensione</button>
+                    </div>
+                </div>
+                <div class="field-group">
+                    <label>Specifiche</label>
+                    <div class="btn-row">
+                        <button class="cmd anda-btn" data-value="capillare">Capillare</button>
+                        <button class="cmd anda-btn" data-value="passante">Passante</button>
+                        <button class="cmd anda-btn" data-value="a ragnatela">A Ragnatela</button>
+                        <button class="cmd anda-btn" data-value="evidente">Evidente</button>
+                        <button class="cmd anda-btn" data-value="discontinua">Discontinua</button>
+                        <button class="cmd anda-btn" data-value="UT">UT</button>
+                        <button class="cmd anda-btn" data-value="DD">DD</button>
+                        <button class="cmd anda-btn" data-value="SX">SX</button>
+                        <button class="cmd anda-btn" data-value="DX">DX</button>
+                        <button class="cmd anda-btn" data-value="alto">Alto</button>
+                        <button class="cmd anda-btn" data-value="basso">Basso</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: Foto -->
+            <div class="tab-panel" data-panel="foto">
+                <div class="field-group">
+                    <label>Foto Vano</label>
+                    <div class="btn-row">
+                        <button class="cmd primary" id="btn-foto-vano">&#128247; Scatta Foto Vano</button>
+                        <button class="cmd danger" id="btn-elimina-foto-vano">Elimina Foto Vano</button>
+                    </div>
+                </div>
+                <div class="field-group">
+                    <label>Foto Difetto</label>
+                    <div class="btn-row">
+                        <button class="cmd primary" id="btn-foto-difetto">&#128247; Scatta Foto Difetto</button>
+                        <button class="cmd danger" id="btn-elimina-foto-difetto">Elimina Foto Difetto</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: Finalizza -->
+            <div class="tab-panel" data-panel="finalizza">
+                <div class="field-group">
+                    <div class="btn-row">
+                        <button class="cmd primary" id="btn-chiusura">Chiusura</button>
+                        <button class="cmd primary" id="btn-esporta-verbale">Esporta Verbale</button>
+                        <button class="cmd" id="btn-esporta-foto">Esporta Allegato Foto</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </header>
+
+    <!-- ============ DOCUMENTO (Foglio editabile) ============ -->
+    <main id="documento">
+        <div id="foglio" contenteditable="true" spellcheck="true"></div>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
