@@ -63,6 +63,9 @@
 
     var PHENOMENA = {
         parete: {
+            'Stato rapido': [
+                'NDR', 'ingombra', 'non visibile'
+            ],
             'Fessurazioni semplici': [
                 'filatura', 'filatura capillare', 'filatura evidente',
                 'filatura discontinua', 'microlesione', 'lesione', 'lesione diagonale'
@@ -308,9 +311,10 @@
         var proprieta = document.getElementById('input-proprieta').value || 'XXXXX XXXXXXX';
 
         var line1 = 'Piano ' + piano + ', ' + state.unitType +
-            ' \u2014 Sub. ' + sub + ' \u2014 Interno ' + interno;
-        var line2 = 'È presente per la Proprietà (' + proprieta.split(' ')[0] +
-            '): ' + proprieta;
+            ' - Sub. ' + sub + ' - Interno ' + interno;
+        var line2 = proprieta.trim()
+            ? 'È presente per la Proprietà (' + proprieta.trim().split(' ').pop() + '): ' + proprieta.trim()
+            : 'È presente per la Proprietà:';
 
         insertLine(line1);
         insertLine(line2);
@@ -424,16 +428,38 @@
         });
     });
 
+    function upgradeNdrHeader() {
+        if (!state.currentVanoHeaderNode) return;
+        var hText = state.currentVanoHeaderNode.textContent;
+        // "NDR;" → "NDR per i restanti elementi;"
+        // but NOT if already upgraded
+        if (hText.indexOf('NDR per i restanti') === -1) {
+            var upgraded = hText.replace(/, NDR;/, ', NDR per i restanti elementi;');
+            if (upgraded !== hText) {
+                state.currentVanoHeaderNode.textContent = upgraded;
+            }
+        }
+    }
+
     function handleElementSelect(elemValue, elemType) {
         if (!state.currentVanoHeaderNode) {
             alert('Crea prima un vano');
             return;
         }
         ensureVanoHeaderClosed();
+        upgradeNdrHeader();
 
         if (state.currentElement === elemValue && state.obsLineOpen) {
+            // Accorpamento: se la riga termina con (V.F. N), aggiungere ", "
             var text = state.currentObsLineNode.textContent;
-            state.currentObsLineNode.textContent = text + ', ';
+            if (/\(V\.F\.\s*\d+\)\s*$/.test(text) || /;\s*$/.test(text)) {
+                // Riga già chiusa o con V.F., riapriamo per accorpamento
+                text = text.replace(/;\s*$/, '').trimEnd();
+                state.currentObsLineNode.textContent = text + ', ';
+                state.obsLineOpen = true;
+            } else {
+                state.currentObsLineNode.textContent = text + ', ';
+            }
             placeCaretAtEnd(state.currentObsLineNode);
         } else {
             closeCurrentObsLine();
@@ -466,14 +492,24 @@
             return;
         }
         var text = state.currentObsLineNode.textContent;
-        if (value === 'NDR') {
+
+        // Auto-closing phenomena: NDR, ingombra, non visibile
+        var autoClose = ['NDR', 'ingombra', 'non visibile'];
+        if (autoClose.indexOf(value) !== -1) {
             text = text.trimEnd();
-            state.currentObsLineNode.textContent = text + ' NDR;';
+            state.currentObsLineNode.textContent = text + ' ' + value + ';';
             state.obsLineOpen = false;
             placeCaretAtEnd(state.currentObsLineNode);
             return;
         }
-        state.currentObsLineNode.textContent = text + value + ' ';
+
+        // Accorpamento automatico: se la riga ha già un (V.F. N), aggiungere ", "
+        if (/\(V\.F\.\s*\d+\)\s*$/.test(text)) {
+            text = text.trimEnd();
+            state.currentObsLineNode.textContent = text + ', ' + value + ' ';
+        } else {
+            state.currentObsLineNode.textContent = text + value + ' ';
+        }
         placeCaretAtEnd(state.currentObsLineNode);
     }
 
@@ -489,6 +525,23 @@
             state.currentObsLineNode.textContent = text + value + ' ';
             placeCaretAtEnd(state.currentObsLineNode);
         });
+    });
+
+    // --- NOTA ---
+    document.getElementById('btn-nota').addEventListener('click', function () {
+        if (!state.currentVanoHeaderNode) {
+            alert('Crea prima un vano');
+            return;
+        }
+        closeCurrentObsLine();
+        ensureVanoHeaderClosed();
+        var nota = prompt('Testo della nota:');
+        if (nota && nota.trim()) {
+            var node = insertLine('Nota: ' + nota.trim());
+            state.currentObsLineNode = null;
+            state.obsLineOpen = false;
+            placeCaretAtEnd(node);
+        }
     });
 
     // --- FOTO DIFETTO (placeholder Step 3 — inserisce V.F.) ---
@@ -524,9 +577,11 @@
     document.getElementById('btn-chiusura').addEventListener('click', function () {
         closeCurrentObsLine();
         ensureVanoHeaderClosed();
+        // Inserisci esattamente una riga vuota prima della chiusura
         var lastChild = foglio.lastChild;
         var lastText = lastChild ? lastChild.textContent.trim() : '';
-        if (lastText !== '') {
+        var lastIsBlank = lastChild && lastChild.innerHTML === '<br>';
+        if (lastText !== '' && !lastIsBlank) {
             insertBlankLine();
         }
         insertLine('Il presente verbale viene letto e sottoscritto.');
