@@ -117,17 +117,15 @@
     var state = {
         unitType: null,
         vanoCount: 0,
-        vfCounter: 0,           // V.F. per vano, resettato ad ogni nuovo vano
+        vfCounter: 0,
 
-        // Tracking nodi DOM
-        currentVanoHeaderNode: null,    // <div> dell'header vano attivo
-        vanoHeaderComplete: false,      // se il ; è stato messo
-        currentObsLineNode: null,       // <div> della riga osservazione corrente
-        currentElement: null,           // nome elemento corrente (es. 'Parete A')
-        currentElementType: null,       // tipo elemento (parete, soffitto, ...)
-        obsLineOpen: false,             // se la riga obs è ancora aperta (senza ;)
+        currentVanoHeaderNode: null,
+        vanoHeaderComplete: false,
+        currentObsLineNode: null,
+        currentElement: null,
+        currentElementType: null,
+        obsLineOpen: false,
 
-        // Infisso
         infissoType: null,
         infissoWall: null
     };
@@ -144,7 +142,6 @@
     // 4. HELPERS DOM
     // ================================================================
 
-    /** Crea una nuova riga (div) nel documento e restituiscila */
     function insertLine(text) {
         var div = document.createElement('div');
         div.textContent = text;
@@ -153,7 +150,6 @@
         return div;
     }
 
-    /** Inserisce una riga vuota */
     function insertBlankLine() {
         var div = document.createElement('div');
         div.innerHTML = '<br>';
@@ -161,7 +157,6 @@
         return div;
     }
 
-    /** Posiziona il cursore alla fine di un nodo */
     function placeCaretAtEnd(node) {
         foglio.focus();
         var range = document.createRange();
@@ -172,7 +167,6 @@
         sel.addRange(range);
     }
 
-    /** Scroll il documento in fondo */
     function scrollToBottom() {
         var doc = document.getElementById('documento');
         setTimeout(function () {
@@ -180,7 +174,6 @@
         }, 50);
     }
 
-    /** Chiude la riga osservazione corrente con ; */
     function closeCurrentObsLine() {
         if (state.currentObsLineNode && state.obsLineOpen) {
             var text = state.currentObsLineNode.textContent.trimEnd();
@@ -191,7 +184,6 @@
         }
     }
 
-    /** Chiude l'header vano se non ancora chiuso */
     function ensureVanoHeaderClosed() {
         if (state.currentVanoHeaderNode && !state.vanoHeaderComplete) {
             var text = state.currentVanoHeaderNode.textContent;
@@ -202,11 +194,9 @@
         }
     }
 
-    /** Appende testo al vano header (prima del ;) */
     function appendToVanoHeader(addText) {
         if (!state.currentVanoHeaderNode) return;
         var text = state.currentVanoHeaderNode.textContent;
-        // Rimuovi ; finale se c'è
         if (text.endsWith(';')) {
             text = text.slice(0, -1);
         }
@@ -215,7 +205,6 @@
         state.vanoHeaderComplete = true;
     }
 
-    /** Deseleziona tutti i bottoni di una classe */
     function deselectAll(className) {
         document.querySelectorAll('.' + className).forEach(function (btn) {
             btn.classList.remove('selected');
@@ -275,7 +264,6 @@
             container.appendChild(fg);
         }
 
-        // Attach event listeners ai nuovi bottoni
         container.querySelectorAll('.' + btnClass).forEach(function (btn) {
             btn.addEventListener('click', function () {
                 if (btnClass === 'pos-btn') {
@@ -299,7 +287,7 @@
     // 7. HANDLERS
     // ================================================================
 
-    // --- UNITÀ: selezione tipo ---
+    // --- UNITA: selezione tipo ---
     document.querySelectorAll('.unit-type').forEach(function (btn) {
         btn.addEventListener('click', function () {
             deselectAll('unit-type');
@@ -308,7 +296,7 @@
         });
     });
 
-    // --- UNITÀ: cappello ---
+    // --- UNITA: cappello ---
     document.getElementById('btn-cappello').addEventListener('click', function () {
         if (!state.unitType) {
             alert('Seleziona il tipo di unità');
@@ -336,14 +324,11 @@
             alert('Seleziona il tipo di unità prima');
             return;
         }
-        // Chiudi eventuali righe aperte
         closeCurrentObsLine();
 
-        // Incrementa contatore vano
         state.vanoCount++;
         state.vfCounter = 0;
 
-        // Inserisci header vano (senza destinazione ancora)
         var headerText = 'VANO ' + state.vanoCount + ': ';
         var node = insertLine(headerText);
 
@@ -354,7 +339,6 @@
         state.currentElementType = null;
         state.obsLineOpen = false;
 
-        // Reset selezioni elemento
         deselectAll('elem-btn');
         deselectAll('infisso-btn');
         document.getElementById('infisso-wall-select').style.display = 'none';
@@ -369,7 +353,6 @@
             var dest = btn.dataset.value;
 
             if (!state.currentVanoHeaderNode || state.vanoHeaderComplete) {
-                // Crea nuovo vano automaticamente
                 closeCurrentObsLine();
                 state.vanoCount++;
                 state.vfCounter = 0;
@@ -387,7 +370,6 @@
                 updateDynamicTabs();
                 placeCaretAtEnd(node);
             } else {
-                // Aggiungi destinazione all'header in corso
                 var text = state.currentVanoHeaderNode.textContent;
                 state.currentVanoHeaderNode.textContent = text + dest + ';';
                 state.vanoHeaderComplete = true;
@@ -413,7 +395,6 @@
     document.querySelectorAll('.elem-btn').forEach(function (btn) {
         btn.addEventListener('click', function () {
             handleElementSelect(btn.dataset.value, btn.dataset.type);
-            // Evidenzia selezione
             deselectAll('elem-btn');
             deselectAll('infisso-btn');
             btn.classList.add('selected');
@@ -429,7 +410,6 @@
             deselectAll('elem-btn');
             deselectAll('infisso-btn');
             btn.classList.add('selected');
-            // Mostra selezione parete
             document.getElementById('infisso-wall-select').style.display = '';
         });
     });
@@ -439,8 +419,6 @@
         btn.addEventListener('click', function () {
             state.infissoWall = btn.dataset.value;
             document.getElementById('infisso-wall-select').style.display = 'none';
-
-            // Componi elemento: "Finestra su Parete B"
             var elemName = state.infissoType + ' su ' + state.infissoWall;
             handleElementSelect(elemName, 'infisso');
         });
@@ -451,21 +429,14 @@
             alert('Crea prima un vano');
             return;
         }
-        // Chiudi header vano se non ancora chiuso
         ensureVanoHeaderClosed();
 
-        // Accorpamento: se stesso elemento, continua sulla stessa riga
         if (state.currentElement === elemValue && state.obsLineOpen) {
-            // Appendi virgola per nuovo difetto sullo stesso elemento
             var text = state.currentObsLineNode.textContent;
-            // Aggiungi ', ' per il prossimo difetto
             state.currentObsLineNode.textContent = text + ', ';
             placeCaretAtEnd(state.currentObsLineNode);
         } else {
-            // Chiudi riga precedente
             closeCurrentObsLine();
-
-            // Nuova riga con nome elemento
             var node = insertLine(elemValue + ' ');
             state.currentObsLineNode = node;
             state.obsLineOpen = true;
@@ -495,9 +466,7 @@
             return;
         }
         var text = state.currentObsLineNode.textContent;
-        // Se NDR: inserisci e chiudi subito
         if (value === 'NDR') {
-            // Rimuovi spazio finale
             text = text.trimEnd();
             state.currentObsLineNode.textContent = text + ' NDR;';
             state.obsLineOpen = false;
@@ -540,7 +509,6 @@
             alert('Crea prima un vano');
             return;
         }
-        // Placeholder: in Step 3 si aprirà la fotocamera
         alert('Foto vano: funzionalità in arrivo (Step 3)');
     });
 
@@ -556,7 +524,6 @@
     document.getElementById('btn-chiusura').addEventListener('click', function () {
         closeCurrentObsLine();
         ensureVanoHeaderClosed();
-        // Riga vuota solo se l'ultima riga non è già vuota
         var lastChild = foglio.lastChild;
         var lastText = lastChild ? lastChild.textContent.trim() : '';
         if (lastText !== '') {
