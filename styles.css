@@ -1,0 +1,317 @@
+/* ============ RESET & BASE ============ */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    height: 100%;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 14px;
+    background: #e8e8e8;
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+}
+
+/* ============ RIBBON (Pannello ~20%) ============ */
+#ribbon {
+    flex: 0 0 auto;
+    background: #f0f0f0;
+    border-bottom: 1px solid #b0b0b0;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* --- Riga tab --- */
+#ribbon-tabs {
+    display: flex;
+    align-items: center;
+    background: #d8d8d8;
+    border-bottom: 1px solid #b0b0b0;
+    padding: 0 4px;
+}
+
+.tabs-row {
+    display: flex;
+    flex: 1;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    gap: 2px;
+    padding: 4px 0;
+}
+
+.tabs-row::-webkit-scrollbar {
+    display: none;
+}
+
+.tab {
+    flex: 0 0 auto;
+    padding: 6px 12px;
+    border: 1px solid transparent;
+    border-bottom: none;
+    border-radius: 4px 4px 0 0;
+    background: transparent;
+    color: #444;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s;
+}
+
+.tab:active {
+    background: #c0c0c0;
+}
+
+.tab.active {
+    background: #f0f0f0;
+    color: #000;
+    border-color: #b0b0b0;
+    font-weight: 600;
+}
+
+/* --- Sync button (sempre visibile) --- */
+#btn-sync {
+    flex: 0 0 auto;
+    width: 42px;
+    height: 34px;
+    margin-left: 6px;
+    border: 1px solid #a0a0a0;
+    border-radius: 6px;
+    background: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+}
+
+#btn-sync:active {
+    background: #d0e8ff;
+}
+
+.sync-icon {
+    color: #2070c0;
+}
+
+/* --- Area comandi tab --- */
+#ribbon-content {
+    min-height: 80px;
+    max-height: 160px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 6px 8px;
+}
+
+.tab-panel {
+    display: none;
+}
+
+.tab-panel.active {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: flex-start;
+}
+
+/* --- Field group --- */
+.field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.field-group label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+/* --- Btn row (griglia bottoni) --- */
+.btn-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+/* --- Command buttons --- */
+.cmd {
+    padding: 5px 10px;
+    border: 1px solid #b0b0b0;
+    border-radius: 4px;
+    background: #fff;
+    color: #333;
+    font-size: 12px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.1s;
+}
+
+.cmd:active {
+    background: #d0d0d0;
+}
+
+.cmd.primary {
+    background: #2070c0;
+    color: #fff;
+    border-color: #1860a8;
+}
+
+.cmd.primary:active {
+    background: #185898;
+}
+
+.cmd.danger {
+    background: #fff;
+    color: #c02020;
+    border-color: #c02020;
+}
+
+.cmd.danger:active {
+    background: #fde8e8;
+}
+
+/* --- Input fields nel ribbon --- */
+.field-group input[type="text"] {
+    padding: 5px 8px;
+    border: 1px solid #b0b0b0;
+    border-radius: 4px;
+    font-size: 13px;
+    width: 100px;
+    background: #fff;
+}
+
+.field-group input[type="text"]:focus {
+    outline: none;
+    border-color: #2070c0;
+    box-shadow: 0 0 0 2px rgba(32, 112, 192, 0.2);
+}
+
+/* Tab Unità: layout orizzontale compatto */
+[data-panel="unita"] {
+    align-items: center;
+}
+
+[data-panel="unita"] .field-group {
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+}
+
+[data-panel="unita"] .field-group label {
+    min-width: auto;
+}
+
+/* ============ DOCUMENTO (~48% - occupa tutto lo spazio restante) ============ */
+#documento {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    background: #e8e8e8;
+    padding: 8px;
+    display: flex;
+    justify-content: center;
+}
+
+#foglio {
+    width: 100%;
+    max-width: 800px;
+    min-height: 100%;
+    background: #fff;
+    padding: 16px 20px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #000;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+    border-radius: 2px;
+    outline: none;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+#foglio:empty::before {
+    content: "Seleziona il tipo di unit\00E0 per iniziare...";
+    color: #aaa;
+    font-style: italic;
+}
+
+/* ============ TASTIERA (gestita da iOS, ~32%) ============ */
+/* Non serve CSS — la tastiera Apple è nativa.
+   Il layout flex si adatta automaticamente quando
+   iOS riduce il viewport con la tastiera aperta. */
+
+/* ============ UTILITY ============ */
+
+/* Scrollbar sottile per il ribbon-content */
+#ribbon-content::-webkit-scrollbar {
+    width: 3px;
+}
+
+#ribbon-content::-webkit-scrollbar-thumb {
+    background: #c0c0c0;
+    border-radius: 2px;
+}
+
+/* Previeni zoom su doppio tap (iPad) */
+button, input {
+    touch-action: manipulation;
+}
+
+/* ============ LANDSCAPE OTTIMIZZAZIONE (iPad) ============ */
+@media (orientation: landscape) and (max-height: 600px) {
+    /* Quando la tastiera è aperta su iPad landscape,
+       lo spazio è ridotto — compatta il ribbon */
+    #ribbon-content {
+        min-height: 60px;
+        max-height: 100px;
+        padding: 4px 6px;
+    }
+
+    .cmd {
+        padding: 4px 8px;
+        font-size: 11px;
+    }
+
+    .tab {
+        padding: 4px 10px;
+        font-size: 12px;
+    }
+
+    .field-group label {
+        font-size: 10px;
+    }
+
+    .field-group input[type="text"] {
+        padding: 3px 6px;
+        font-size: 12px;
+        width: 80px;
+    }
+
+    #foglio {
+        padding: 10px 14px;
+        font-size: 12px;
+    }
+}
+
+/* ============ PORTRAIT FALLBACK ============ */
+@media (orientation: portrait) {
+    .tab {
+        padding: 6px 8px;
+        font-size: 12px;
+    }
+
+    #ribbon-content {
+        max-height: 200px;
+    }
+}
