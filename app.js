@@ -1177,4 +1177,55 @@
         updateSectionsVisibility();
     };
 
+    // ================================================================
+    // 15. PAGINAZIONE AUTOMATICA (MutationObserver)
+    // ================================================================
+
+    // Ricalcola i page break basandosi sulle posizioni reali dei div
+    function recalcPageBreaks() {
+        // Rimuovi page break esistenti
+        foglio.querySelectorAll('.page-break').forEach(function (pb) {
+            pb.remove();
+        });
+
+        var children = Array.from(foglio.children);
+        var pageHeight = 1123; // altezza pagina in px
+        var firstLineY = 141;  // padding-top = dove inizia il testo
+        var bottomMargin = 37; // margine fondo pagina
+        var usableHeight = pageHeight - firstLineY - bottomMargin; // ~945px = 25 righe
+        var currentY = 0;
+
+        for (var i = 0; i < children.length; i++) {
+            var child = children[i];
+            var h = child.offsetHeight || 37.8;
+            currentY += h;
+
+            if (currentY > usableHeight) {
+                // Inserisci page break prima di questo elemento
+                var pb = document.createElement('div');
+                pb.className = 'page-break';
+                pb.setAttribute('contenteditable', 'false');
+                foglio.insertBefore(pb, child);
+                currentY = h; // reset per nuova pagina
+            }
+        }
+    }
+
+    // Debounce per non ricalcolare ad ogni keystroke
+    var pageBreakTimer = null;
+    function schedulePageBreakRecalc() {
+        if (pageBreakTimer) clearTimeout(pageBreakTimer);
+        pageBreakTimer = setTimeout(recalcPageBreaks, 300);
+    }
+
+    // Osserva cambiamenti nel foglio (anche testo scritto a mano)
+    var observer = new MutationObserver(function () {
+        schedulePageBreakRecalc();
+    });
+    observer.observe(foglio, {
+        childList: true,
+        subtree: true,
+        characterData: true
+    });
+
 })();
