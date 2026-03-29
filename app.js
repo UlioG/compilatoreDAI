@@ -1,23 +1,49 @@
 /**
- * Compilatore Verbale — Step 2: Inserimento testo dai bottoni
- * Logica completa: stato, matrice, accorpamento, tab dinamiche
+ * Compilatore Verbale — Step 2c+: Fix completi da simulazione 17 verbali
+ * - V.F. progressivo (non reset per vano)
+ * - Formato "(V. F. N)" con spazi
+ * - Destinazioni minuscole
+ * - Proprietario/delegato separati
+ * - Pareti A-N, posizioni/fenomeni/andamento estesi
+ * - Attributi vano: rivestimento, controparete, soppalco, ecc.
+ * - Foto vano funzionante
+ * - "restanti elementi NDR." automatico
+ * - Chiusura "Letto e sottoscritto."
+ * - Elementi: Trave, Cornicione superiore, Sottobalcone superiore
+ * - Scala nome nel documento
  */
 
 (function () {
     'use strict';
 
     // ================================================================
-    // 1. MATRICE DATI (da config.py della webapp)
+    // 1. MATRICE DATI (estesa da analisi 17 verbali reali)
     // ================================================================
 
     var POSITIONS = {
         parete: {
             'Localizzazione diretta': [
-                'a DX', 'a SX', 'al centro',
-                'nella parte apicale', 'nella parte apicale a DX', 'nella parte apicale a SX',
-                'al piede', 'al piede a DX', 'al piede a SX'
+                'a dx', 'a sx', 'al centro',
+                'nella parte apicale', 'nella parte apicale a dx', 'nella parte apicale a sx',
+                'al piede', 'al piede a dx', 'al piede a sx',
+                'in alto', 'in basso', 'a tutta altezza',
+                'intera superficie'
+            ],
+            'Presso apertura': [
+                'presso finestra', 'presso varco', 'presso porta',
+                'sopra varco', 'sopra porta', 'sotto telaio finestra',
+                'presso porta finestra'
+            ],
+            'Presso struttura': [
+                'presso pilastro', 'presso spigolo', 'presso trave',
+                'in corrispondenza di', 'in prossimità di',
+                'limitrofo alle pareti', 'sul perimetro',
+                'lungo tutta la superficie'
             ],
             'Diedri (DD)': [
+                'al dd', 'al dd dx', 'al dd sx',
+                'al dd con soffitto', 'al dd con pavimento',
+                'presso dd',
                 'a partire da DD alto DX', 'a partire da DD alto SX',
                 'a partire da DD basso DX', 'a partire da DD basso SX',
                 'a partire da DD (Generico) VT', 'a partire da DD (Generico) OZ',
@@ -28,29 +54,49 @@
                 'PTB varco di passaggio al centro', 'PTB porta al centro',
                 'in corrispondenza varco di passaggio', 'in corrispondenza porta'
             ],
+            'Ordinali': [
+                'presso 1° varco da sx', 'presso 1° varco da dx',
+                'presso 2° varco da sx', 'presso 2° varco da dx',
+                'presso 1° porta da sx', 'presso 1° porta da dx',
+                'presso 2° porta da sx', 'presso 2° porta da dx',
+                'tra 1° e 2° finestra', 'tra 1° e 2° varco da sx',
+                'tra 1° e 2° porta da sx'
+            ],
             'Altri': [
                 'a partire da rivestimento',
                 'a partire da intradosso',
                 'a partire da travetto'
             ]
         },
+        parete_prospetto: {
+            'Posizione': [
+                'in alto', 'in basso', 'a sx', 'a dx', 'al centro',
+                'DD "spigolo"', 'intera superficie',
+                'angolo SX', 'angolo DX'
+            ]
+        },
         soffitto: {
             'Posizione': [
-                'intera superficie', 'porzione lato SX', 'porzione lato DX',
+                'intera superficie', 'porzione lato sx', 'porzione lato dx',
                 'centro', 'centro alto', 'centro basso',
-                'presso varco di passaggio'
+                'presso varco di passaggio',
+                'perpendicolare a parete', 'parallelo a parete'
             ]
         },
         pavimento: {
             'Posizione': [
-                'intera superficie', 'porzione lato SX', 'porzione lato DX',
-                'centro', 'presso varco di passaggio', 'al centro del vano'
+                'intera superficie', 'porzione lato sx', 'porzione lato dx',
+                'centro', 'presso varco di passaggio', 'al centro del vano',
+                'presso soglia', 'sul perimetro'
             ]
         },
         infisso: {
             'Sotto-parte': [
-                'soglia', 'intradosso', 'stipite DX', 'stipite SX',
-                'anta', 'vetro', 'telaio', 'davanzale', 'cassonetto', 'imbotte'
+                'soglia', 'intradosso', 'stipite dx', 'stipite sx',
+                'anta', 'vetro', 'telaio', 'davanzale', 'cassonetto', 'imbotte',
+                'architrave', 'piattabanda', 'spalletta',
+                'piedritto', 'piedritti',
+                'rene sx', 'rene dx', 'chiave', 'chiave di volta'
             ]
         },
         balcone: {
@@ -58,6 +104,12 @@
         },
         cornice: {
             'Posizione': ['intera superficie', 'porzione']
+        },
+        trave: {
+            'Posizione': [
+                'intera superficie', 'porzione',
+                'in corrispondenza di', 'al centro'
+            ]
         }
     };
 
@@ -67,51 +119,86 @@
                 'NDR', 'ingombra', 'non visibile'
             ],
             'Fessurazioni semplici': [
-                'filatura', 'filatura capillare', 'filatura evidente',
-                'filatura discontinua', 'microlesione', 'lesione', 'lesione diagonale'
+                'filatura', 'filature',
+                'filatura capillare', 'filatura evidente', 'filatura discontinua',
+                'microlesione', 'microlesioni',
+                'lesione', 'lesioni',
+                'lesione diagonale', 'macrolesioni'
             ],
             'Fessurazioni composte': [
                 'serie di filature',
-                'filatura OZ con ramificazioni VT',
-                'filatura VT con ramificazioni OZ',
-                'filatura pseudo VT con laminazione'
+                'filatura oz con ramificazioni vt',
+                'filatura vt con ramificazioni oz',
+                'filatura pseudo vt con laminazione'
             ],
             'Patologie': [
-                'macchia', 'macchia di umidità', 'umidità con efflorescenza',
-                'distacco', 'distacco di intonaco', "esfoliazione d'intonaco",
-                'gonfiamento', 'scrostatura'
+                'macchia', 'macchia di umidità',
+                'umidità', 'umidità con efflorescenza',
+                'umidità con distacco', 'umidità con spellicciatura',
+                'infiltrazione', 'infiltrazioni',
+                'distacco', 'distacchi', 'distacco di intonaco', 'distacco perimetrale',
+                "esfoliazione d'intonaco",
+                'gonfiamento', 'rigonfiamento', 'scrostatura', 'spellicciatura'
             ],
             'Altro': [
-                'mancanza', 'lacuna di materiale', 'efflorescenza',
-                'colonizzazione biologica'
+                'efflorescenza', 'efflorescenze',
+                'esposizione dei ferri', 'vegetazione infestante',
+                'mancanza', 'lacuna di materiale',
+                'colonizzazione biologica', 'degrado superficiale'
             ]
         },
         soffitto: {
             'Fenomeno': [
                 'NDR', 'non visibile', 'macchia', 'umidità', 'distacco',
-                'lesione', 'filatura', 'gonfiamento',
-                'distacco di intonaco', "esfoliazione d'intonaco"
+                'lesione', 'filatura', 'filature', 'gonfiamento',
+                'distacco di intonaco', "esfoliazione d'intonaco",
+                'infiltrazione', 'spellicciatura'
             ]
         },
         pavimento: {
             'Fenomeno': [
                 'NDR', 'non visibile', 'distacco', 'rottura', 'macchia',
-                'filatura', 'avvallamento', 'lacuna di materiale'
+                'filatura', 'avvallamento', 'lacuna di materiale',
+                'mattonelle rotte', 'mattonelle lesionate'
             ]
         },
         infisso: {
             'Fenomeno': [
                 'NDR', 'non visibile', 'filatura', 'mancanza',
-                'non funzionante', 'rotta', 'vetro incrinato', 'telaio degradato'
+                'non funzionante', 'rotta', 'vetro incrinato', 'telaio degradato',
+                'rottura', 'distacco', 'degrado superficiale'
             ]
         },
         balcone: {
-            'Fenomeno': ['NDR', 'non visibile', 'distacco', 'rottura', 'macchia']
+            'Fenomeno': ['NDR', 'non visibile', 'distacco', 'rottura', 'macchia',
+                'filatura', 'degrado superficiale', 'umidità', 'spellicciatura']
         },
         cornice: {
-            'Fenomeno': ['NDR', 'non visibile', 'distacco', 'rottura', 'macchia']
+            'Fenomeno': ['NDR', 'non visibile', 'distacco', 'rottura', 'macchia',
+                'filatura', 'degrado superficiale', 'spellicolatura', 'spellicciatura']
+        },
+        trave: {
+            'Fenomeno': [
+                'NDR', 'non visibile', 'filatura', 'filature',
+                'lesione', 'microlesione', 'distacco', 'macchia', 'umidità'
+            ]
         }
     };
+
+    // Sotto-sezioni scala
+    var STAIR_SUBSECTIONS_FIXED = ['Pianerottolo di piano'];
+    var STAIR_SUBSECTIONS_BOTTOM = ['Sottoscala'];
+
+    function generateStairSubsections(rampCount) {
+        var result = STAIR_SUBSECTIONS_FIXED.slice();
+        for (var i = 1; i <= rampCount; i++) {
+            result.push('Rampa ' + i);
+            if (i < rampCount) {
+                result.push('Pianerottolo interpiano ' + i);
+            }
+        }
+        return result.concat(STAIR_SUBSECTIONS_BOTTOM);
+    }
 
     // ================================================================
     // 2. STATO APPLICAZIONE
@@ -120,7 +207,8 @@
     var state = {
         unitType: null,
         vanoCount: 0,
-        vfCounter: 0,
+        vfCounter: 0,          // PROGRESSIVO su tutto il documento (mai reset)
+        hasObservationsInVano: false, // Track se il vano corrente ha osservazioni
 
         currentVanoHeaderNode: null,
         vanoHeaderComplete: false,
@@ -130,7 +218,21 @@
         obsLineOpen: false,
 
         infissoType: null,
-        infissoWall: null
+        infissoWall: null,
+
+        // Contesto ambiente
+        ambienteMode: 'vano',  // 'vano' | 'prospetto' | 'scala'
+
+        // Prospetto
+        prospettoLetter: null,
+
+        // Scala
+        scalaName: null,
+        scalaRampCount: 2,
+        scalaCurrentSubsection: null,
+
+        // Chiusura formula
+        closingFormula: 'Letto e sottoscritto.'
     };
 
     // ================================================================
@@ -187,6 +289,21 @@
         }
     }
 
+    // Insert "restanti elementi NDR." before creating a new environment
+    function insertRestantiNdr() {
+        if (state.hasObservationsInVano && state.currentVanoHeaderNode) {
+            // Only insert if the vano had actual observations (not just NDR header)
+            var lastDiv = foglio.lastChild;
+            if (lastDiv && lastDiv !== state.currentVanoHeaderNode) {
+                var lastText = lastDiv.textContent.trim();
+                // Don't add if last line already ends with NDR or is the header
+                if (!lastText.match(/NDR[.;]?\s*$/) && lastText !== '') {
+                    insertLine('restanti elementi NDR.');
+                }
+            }
+        }
+    }
+
     function ensureVanoHeaderClosed() {
         if (state.currentVanoHeaderNode && !state.vanoHeaderComplete) {
             var text = state.currentVanoHeaderNode.textContent;
@@ -203,7 +320,11 @@
         if (text.endsWith(';')) {
             text = text.slice(0, -1);
         }
-        text += ', ' + addText + ';';
+        if (text.endsWith(':')) {
+            text += ' ' + addText + ';';
+        } else {
+            text += ', ' + addText + ';';
+        }
         state.currentVanoHeaderNode.textContent = text;
         state.vanoHeaderComplete = true;
     }
@@ -214,8 +335,108 @@
         });
     }
 
+    function resetObsState() {
+        state.currentObsLineNode = null;
+        state.currentElement = null;
+        state.currentElementType = null;
+        state.obsLineOpen = false;
+        state.hasObservationsInVano = false;
+        deselectAll('elem-btn');
+        deselectAll('infisso-btn');
+        var wallSel = document.getElementById('infisso-wall-select');
+        if (wallSel) wallSel.style.display = 'none';
+        updateDynamicTabs();
+    }
+
     // ================================================================
-    // 5. TAB SWITCHING
+    // 4b. PERSISTENZA LOCALE
+    // ================================================================
+
+    function saveToLocal() {
+        try {
+            var data = {
+                html: foglio.innerHTML,
+                vanoCount: state.vanoCount,
+                vfCounter: state.vfCounter,
+                unitType: state.unitType,
+                timestamp: Date.now()
+            };
+            localStorage.setItem('compilatore_autosave', JSON.stringify(data));
+        } catch (e) { /* ignore quota errors */ }
+    }
+
+    function loadFromLocal() {
+        try {
+            var raw = localStorage.getItem('compilatore_autosave');
+            if (!raw) return false;
+            var data = JSON.parse(raw);
+            if (data.html) {
+                foglio.innerHTML = data.html;
+                state.vanoCount = data.vanoCount || 0;
+                state.vfCounter = data.vfCounter || 0;
+                state.unitType = data.unitType || null;
+                // Reset transient state
+                state.currentVanoHeaderNode = null;
+                state.vanoHeaderComplete = true;
+                state.currentObsLineNode = null;
+                state.obsLineOpen = false;
+                state.hasObservationsInVano = false;
+                return true;
+            }
+        } catch (e) { /* ignore parse errors */ }
+        return false;
+    }
+
+    // Autosave on every change
+    var saveTimer = null;
+    function scheduleSave() {
+        if (saveTimer) clearTimeout(saveTimer);
+        saveTimer = setTimeout(saveToLocal, 500);
+    }
+
+    // ================================================================
+    // 5. VISIBILITA SEZIONI (Parti Comuni vs standard)
+    // ================================================================
+
+    function updateSectionsVisibility() {
+        var isPC = state.unitType === 'Parti Comuni';
+
+        var sezioneVano = document.getElementById('sezione-vano');
+        var sezioneProspetto = document.getElementById('sezione-prospetto');
+        var sezioneScala = document.getElementById('sezione-scala');
+
+        sezioneVano.style.display = '';
+        sezioneProspetto.style.display = isPC ? '' : 'none';
+        sezioneScala.style.display = isPC ? '' : 'none';
+
+        var destRow = document.getElementById('dest-row');
+        var destRowPC = document.getElementById('dest-row-pc');
+        destRow.style.display = isPC ? 'none' : '';
+        destRowPC.style.display = isPC ? '' : 'none';
+
+        updateElementVisibility();
+    }
+
+    function updateElementVisibility() {
+        var elemVano = document.getElementById('elem-vano');
+        var elemProspetto = document.getElementById('elem-prospetto');
+        var elemScala = document.getElementById('elem-scala');
+
+        elemVano.style.display = 'none';
+        elemProspetto.style.display = 'none';
+        elemScala.style.display = 'none';
+
+        if (state.ambienteMode === 'prospetto') {
+            elemProspetto.style.display = '';
+        } else if (state.ambienteMode === 'scala') {
+            elemScala.style.display = '';
+        } else {
+            elemVano.style.display = '';
+        }
+    }
+
+    // ================================================================
+    // 6. TAB SWITCHING
     // ================================================================
 
     tabs.forEach(function (tab) {
@@ -230,7 +451,7 @@
     });
 
     // ================================================================
-    // 6. TAB DINAMICHE (Posizione e Fenomeno)
+    // 7. TAB DINAMICHE (Posizione e Fenomeno)
     // ================================================================
 
     function buildDynamicButtons(containerId, data, btnClass) {
@@ -278,16 +499,24 @@
         });
     }
 
+    function getPositionsForElement(elType) {
+        if (!elType) return null;
+        if (state.ambienteMode === 'prospetto' && elType === 'parete') {
+            return POSITIONS['parete_prospetto'];
+        }
+        return POSITIONS[elType] || null;
+    }
+
     function updateDynamicTabs() {
         var elType = state.currentElementType;
         buildDynamicButtons('posizione-content',
-            elType ? POSITIONS[elType] : null, 'pos-btn');
+            getPositionsForElement(elType), 'pos-btn');
         buildDynamicButtons('fenomeno-content',
             elType ? PHENOMENA[elType] : null, 'phen-btn');
     }
 
     // ================================================================
-    // 7. HANDLERS
+    // 8. HANDLERS
     // ================================================================
 
     // --- UNITA: selezione tipo ---
@@ -296,6 +525,8 @@
             deselectAll('unit-type');
             btn.classList.add('selected');
             state.unitType = btn.dataset.value;
+            state.ambienteMode = 'vano';
+            updateSectionsVisibility();
         });
     });
 
@@ -308,18 +539,31 @@
         var piano = document.getElementById('input-piano').value || 'X';
         var sub = document.getElementById('input-sub').value || 'XX';
         var interno = document.getElementById('input-interno').value || 'XX';
-        var proprieta = document.getElementById('input-proprieta').value || 'XXXXX XXXXXXX';
+        var proprietario = document.getElementById('input-proprietario').value.trim();
+        var delegato = document.getElementById('input-delegato').value.trim();
 
         var line1 = 'Piano ' + piano + ', ' + state.unitType +
             ' - Sub. ' + sub + ' - Interno ' + interno;
-        var line2 = proprieta.trim()
-            ? 'È presente per la Proprietà (' + proprieta.trim().split(' ').pop() + '): ' + proprieta.trim()
-            : 'È presente per la Proprietà:';
+
+        var line2;
+        if (proprietario && delegato) {
+            // Owner + delegate
+            line2 = 'È presente per la Proprietà (' + proprietario + '): ' + delegato;
+        } else if (proprietario) {
+            // Owner present directly (no delegate)
+            line2 = 'È presente per la Proprietà: ' + proprietario;
+        } else if (delegato) {
+            // Only delegate provided
+            line2 = 'È presente per la Proprietà: ' + delegato;
+        } else {
+            line2 = 'È presente per la Proprietà:';
+        }
 
         insertLine(line1);
         insertLine(line2);
 
         placeCaretAtEnd(foglio.lastChild);
+        scheduleSave();
     });
 
     // --- VANO: nuovo vano ---
@@ -329,82 +573,232 @@
             return;
         }
         closeCurrentObsLine();
+        insertRestantiNdr();
 
-        state.vanoCount++;
-        state.vfCounter = 0;
+        // Support manual vano number (e.g. "6/7") or auto-increment
+        var manualNum = document.getElementById('input-vano-num');
+        var vanoNum;
+        if (manualNum && manualNum.value.trim()) {
+            vanoNum = manualNum.value.trim();
+            // Update counter to max number for future auto-increment
+            var nums = vanoNum.split('/').map(Number).filter(function(n) { return !isNaN(n); });
+            if (nums.length) state.vanoCount = Math.max.apply(null, nums);
+            manualNum.value = '';
+        } else {
+            state.vanoCount++;
+            vanoNum = String(state.vanoCount);
+        }
+        state.ambienteMode = 'vano';
 
-        var headerText = 'VANO ' + state.vanoCount + ': ';
+        var headerText = 'VANO ' + vanoNum + ': ';
         var node = insertLine(headerText);
 
         state.currentVanoHeaderNode = node;
         state.vanoHeaderComplete = false;
-        state.currentObsLineNode = null;
-        state.currentElement = null;
-        state.currentElementType = null;
-        state.obsLineOpen = false;
-
-        deselectAll('elem-btn');
-        deselectAll('infisso-btn');
-        document.getElementById('infisso-wall-select').style.display = 'none';
-        updateDynamicTabs();
+        resetObsState();
+        updateElementVisibility();
 
         placeCaretAtEnd(node);
+        scheduleSave();
     });
 
     // --- VANO: destinazione ---
-    document.querySelectorAll('.dest-btn').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            var dest = btn.dataset.value;
+    function bindDestButtons() {
+        document.querySelectorAll('.dest-btn').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var dest = btn.dataset.value.toLowerCase(); // FIX F2: minuscola
 
-            if (!state.currentVanoHeaderNode || state.vanoHeaderComplete) {
-                closeCurrentObsLine();
-                state.vanoCount++;
-                state.vfCounter = 0;
-                var headerText = 'VANO ' + state.vanoCount + ': ' + dest + ';';
-                var node = insertLine(headerText);
-                state.currentVanoHeaderNode = node;
-                state.vanoHeaderComplete = true;
-                state.currentObsLineNode = null;
-                state.currentElement = null;
-                state.currentElementType = null;
-                state.obsLineOpen = false;
-                deselectAll('elem-btn');
-                deselectAll('infisso-btn');
-                document.getElementById('infisso-wall-select').style.display = 'none';
-                updateDynamicTabs();
-                placeCaretAtEnd(node);
-            } else {
-                var text = state.currentVanoHeaderNode.textContent;
-                state.currentVanoHeaderNode.textContent = text + dest + ';';
-                state.vanoHeaderComplete = true;
-                placeCaretAtEnd(state.currentVanoHeaderNode);
-            }
+                if (!state.currentVanoHeaderNode || state.vanoHeaderComplete) {
+                    closeCurrentObsLine();
+                    insertRestantiNdr();
+                    // Support manual vano number
+                    var manualNum2 = document.getElementById('input-vano-num');
+                    var vanoNum2;
+                    if (manualNum2 && manualNum2.value.trim()) {
+                        vanoNum2 = manualNum2.value.trim();
+                        var nums2 = vanoNum2.split('/').map(Number).filter(function(n) { return !isNaN(n); });
+                        if (nums2.length) state.vanoCount = Math.max.apply(null, nums2);
+                        manualNum2.value = '';
+                    } else {
+                        state.vanoCount++;
+                        vanoNum2 = String(state.vanoCount);
+                    }
+                    state.ambienteMode = 'vano';
+                    var headerText = 'VANO ' + vanoNum2 + ': ' + dest + ';';
+                    var node = insertLine(headerText);
+                    state.currentVanoHeaderNode = node;
+                    state.vanoHeaderComplete = true;
+                    resetObsState();
+                    updateElementVisibility();
+                    placeCaretAtEnd(node);
+                } else {
+                    var text = state.currentVanoHeaderNode.textContent;
+                    state.currentVanoHeaderNode.textContent = text + dest + ';';
+                    state.vanoHeaderComplete = true;
+                    placeCaretAtEnd(state.currentVanoHeaderNode);
+                }
+                scheduleSave();
+            });
         });
-    });
+    }
+    bindDestButtons();
 
-    // --- VANO: pre-check (C/S, NDR, ecc.) ---
+    // --- VANO: pre-check (C/S, NDR, rivestimento, ecc.) ---
     document.querySelectorAll('.precheck-btn').forEach(function (btn) {
         btn.addEventListener('click', function () {
             var value = btn.dataset.value;
             if (!state.currentVanoHeaderNode) {
-                alert('Crea prima un vano');
+                alert('Crea prima un ambiente');
                 return;
             }
-            appendToVanoHeader(value);
+
+            // Attributi con input altezza
+            if (value === '__rivestimento__' || value === '__controparete__') {
+                var label = value === '__rivestimento__' ? 'rivestimento' : 'controparete';
+                var h = prompt('Altezza in metri (es. 2, 1.50, "a tutta altezza", "parziale"):');
+                if (h && h.trim()) {
+                    var hVal = h.trim();
+                    if (hVal === 'a tutta altezza' || hVal === 'parziale' || isNaN(parseFloat(hVal))) {
+                        appendToVanoHeader(label + ' ' + hVal);
+                    } else {
+                        appendToVanoHeader(label + ' a ' + hVal + ' m circa');
+                    }
+                } else {
+                    appendToVanoHeader(label);
+                }
+            } else {
+                appendToVanoHeader(value);
+            }
             placeCaretAtEnd(state.currentVanoHeaderNode);
+            scheduleSave();
         });
     });
 
-    // --- ELEMENTO ---
-    document.querySelectorAll('.elem-btn').forEach(function (btn) {
+    // ================================================================
+    // 9. PROSPETTO
+    // ================================================================
+
+    document.getElementById('btn-nuovo-prospetto').addEventListener('click', function () {
+        if (!state.unitType) {
+            alert('Seleziona il tipo di unità prima');
+            return;
+        }
+        document.getElementById('prospetto-select').style.display = '';
+    });
+
+    document.querySelectorAll('.prosp-btn').forEach(function (btn) {
         btn.addEventListener('click', function () {
-            handleElementSelect(btn.dataset.value, btn.dataset.type);
-            deselectAll('elem-btn');
-            deselectAll('infisso-btn');
-            btn.classList.add('selected');
-            document.getElementById('infisso-wall-select').style.display = 'none';
+            closeCurrentObsLine();
+            insertRestantiNdr();
+
+            state.ambienteMode = 'prospetto';
+            state.prospettoLetter = btn.dataset.value;
+            // V.F. counter NON si resetta
+
+            var headerText = 'PROSPETTO ' + btn.dataset.value + ':';
+            var node = insertLine(headerText);
+
+            state.currentVanoHeaderNode = node;
+            state.vanoHeaderComplete = true;
+            resetObsState();
+            updateElementVisibility();
+
+            document.getElementById('prospetto-select').style.display = 'none';
+            placeCaretAtEnd(node);
+            scheduleSave();
         });
     });
+
+    // ================================================================
+    // 10. SCALA
+    // ================================================================
+
+    document.getElementById('btn-nuova-scala').addEventListener('click', function () {
+        if (!state.unitType) {
+            alert('Seleziona il tipo di unità prima');
+            return;
+        }
+        document.getElementById('scala-name-select').style.display = '';
+    });
+
+    document.querySelectorAll('.scala-name-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            state.scalaName = btn.dataset.value;
+            document.getElementById('scala-name-select').style.display = 'none';
+
+            var rampInput = prompt('Numero di rampe tra un piano e l\'altro (default: 2):', '2');
+            state.scalaRampCount = parseInt(rampInput) || 2;
+
+            // FIX M5: Inserisci intestazione scala nel documento
+            closeCurrentObsLine();
+            insertRestantiNdr();
+            var scalaLabel = state.scalaName ? 'SCALA ' + state.scalaName + ':' : 'SCALA:';
+            insertLine(scalaLabel);
+
+            buildScalaSubsections();
+            document.getElementById('scala-subsection-select').style.display = '';
+            scheduleSave();
+        });
+    });
+
+    function buildScalaSubsections() {
+        var row = document.getElementById('scala-subsection-row');
+        row.innerHTML = '';
+        var subs = generateStairSubsections(state.scalaRampCount);
+        subs.forEach(function (sub) {
+            var btn = document.createElement('button');
+            btn.className = 'cmd scala-sub-btn';
+            btn.dataset.value = sub;
+            btn.textContent = sub;
+            btn.addEventListener('click', function () {
+                handleScalaSubsectionClick(sub);
+            });
+            row.appendChild(btn);
+        });
+    }
+
+    function handleScalaSubsectionClick(subsection) {
+        closeCurrentObsLine();
+        insertRestantiNdr();
+
+        state.ambienteMode = 'scala';
+        state.scalaCurrentSubsection = subsection;
+        // V.F. counter NON si resetta
+
+        var headerText = subsection + ':';
+        var node = insertLine(headerText);
+
+        state.currentVanoHeaderNode = node;
+        state.vanoHeaderComplete = true;
+        resetObsState();
+        updateElementVisibility();
+
+        deselectAll('scala-sub-btn');
+        document.querySelectorAll('.scala-sub-btn').forEach(function (b) {
+            if (b.dataset.value === subsection) b.classList.add('selected');
+        });
+
+        placeCaretAtEnd(node);
+        scheduleSave();
+    }
+
+    // ================================================================
+    // 11. ELEMENTI
+    // ================================================================
+
+    function bindElementButtons() {
+        document.querySelectorAll('.elem-btn').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                handleElementSelect(btn.dataset.value, btn.dataset.type);
+                deselectAll('elem-btn');
+                deselectAll('infisso-btn');
+                btn.classList.add('selected');
+                var wallSel = document.getElementById('infisso-wall-select');
+                if (wallSel) wallSel.style.display = 'none';
+            });
+        });
+    }
+    bindElementButtons();
 
     // --- INFISSO: tipo ---
     document.querySelectorAll('.infisso-btn').forEach(function (btn) {
@@ -414,7 +808,13 @@
             deselectAll('elem-btn');
             deselectAll('infisso-btn');
             btn.classList.add('selected');
-            document.getElementById('infisso-wall-select').style.display = '';
+
+            if (state.ambienteMode === 'prospetto') {
+                handleElementSelect(state.infissoType, 'infisso');
+            } else {
+                var wallSel = document.getElementById('infisso-wall-select');
+                if (wallSel) wallSel.style.display = '';
+            }
         });
     });
 
@@ -422,7 +822,8 @@
     document.querySelectorAll('.infisso-wall-btn').forEach(function (btn) {
         btn.addEventListener('click', function () {
             state.infissoWall = btn.dataset.value;
-            document.getElementById('infisso-wall-select').style.display = 'none';
+            var wallSel = document.getElementById('infisso-wall-select');
+            if (wallSel) wallSel.style.display = 'none';
             var elemName = state.infissoType + ' su ' + state.infissoWall;
             handleElementSelect(elemName, 'infisso');
         });
@@ -431,8 +832,6 @@
     function upgradeNdrHeader() {
         if (!state.currentVanoHeaderNode) return;
         var hText = state.currentVanoHeaderNode.textContent;
-        // "NDR;" → "NDR per i restanti elementi;"
-        // but NOT if already upgraded
         if (hText.indexOf('NDR per i restanti') === -1) {
             var upgraded = hText.replace(/, NDR;/, ', NDR per i restanti elementi;');
             if (upgraded !== hText) {
@@ -443,17 +842,15 @@
 
     function handleElementSelect(elemValue, elemType) {
         if (!state.currentVanoHeaderNode) {
-            alert('Crea prima un vano');
+            alert('Crea prima un ambiente');
             return;
         }
         ensureVanoHeaderClosed();
         upgradeNdrHeader();
 
         if (state.currentElement === elemValue && state.obsLineOpen) {
-            // Accorpamento: se la riga termina con (V.F. N), aggiungere ", "
             var text = state.currentObsLineNode.textContent;
-            if (/\(V\.F\.\s*\d+\)\s*$/.test(text) || /;\s*$/.test(text)) {
-                // Riga già chiusa o con V.F., riapriamo per accorpamento
+            if (/\(V\. F\.\s*[\d/]+\)\s*$/.test(text) || /;\s*$/.test(text)) {
                 text = text.replace(/;\s*$/, '').trimEnd();
                 state.currentObsLineNode.textContent = text + ', ';
                 state.obsLineOpen = true;
@@ -471,7 +868,9 @@
 
         state.currentElement = elemValue;
         state.currentElementType = elemType;
+        state.hasObservationsInVano = true;
         updateDynamicTabs();
+        scheduleSave();
     }
 
     // --- POSIZIONE ---
@@ -483,6 +882,7 @@
         var text = state.currentObsLineNode.textContent;
         state.currentObsLineNode.textContent = text + value + ' ';
         placeCaretAtEnd(state.currentObsLineNode);
+        scheduleSave();
     }
 
     // --- FENOMENO ---
@@ -493,24 +893,25 @@
         }
         var text = state.currentObsLineNode.textContent;
 
-        // Auto-closing phenomena: NDR, ingombra, non visibile
         var autoClose = ['NDR', 'ingombra', 'non visibile'];
         if (autoClose.indexOf(value) !== -1) {
             text = text.trimEnd();
             state.currentObsLineNode.textContent = text + ' ' + value + ';';
             state.obsLineOpen = false;
             placeCaretAtEnd(state.currentObsLineNode);
+            scheduleSave();
             return;
         }
 
-        // Accorpamento automatico: se la riga ha già un (V.F. N), aggiungere ", "
-        if (/\(V\.F\.\s*\d+\)\s*$/.test(text)) {
+        // FIX: if V.F. already at end, append with comma
+        if (/\(V\. F\.\s*[\d/]+\)\s*$/.test(text)) {
             text = text.trimEnd();
             state.currentObsLineNode.textContent = text + ', ' + value + ' ';
         } else {
             state.currentObsLineNode.textContent = text + value + ' ';
         }
         placeCaretAtEnd(state.currentObsLineNode);
+        scheduleSave();
     }
 
     // --- ANDAMENTO ---
@@ -524,27 +925,29 @@
             var text = state.currentObsLineNode.textContent;
             state.currentObsLineNode.textContent = text + value + ' ';
             placeCaretAtEnd(state.currentObsLineNode);
+            scheduleSave();
         });
     });
 
     // --- NOTA ---
     document.getElementById('btn-nota').addEventListener('click', function () {
         if (!state.currentVanoHeaderNode) {
-            alert('Crea prima un vano');
+            alert('Crea prima un ambiente');
             return;
         }
         closeCurrentObsLine();
         ensureVanoHeaderClosed();
         var nota = prompt('Testo della nota:');
         if (nota && nota.trim()) {
-            var node = insertLine('Nota: ' + nota.trim());
+            var node = insertLine('Note: ' + nota.trim());
             state.currentObsLineNode = null;
             state.obsLineOpen = false;
             placeCaretAtEnd(node);
+            scheduleSave();
         }
     });
 
-    // --- FOTO DIFETTO (placeholder Step 3 — inserisce V.F.) ---
+    // --- FOTO DIFETTO --- FIX F1+R1: formato "(V. F. N)" con V.F. multipli
     document.getElementById('btn-foto-difetto').addEventListener('click', function () {
         if (!state.currentObsLineNode || !state.obsLineOpen) {
             alert('Seleziona prima un elemento');
@@ -552,43 +955,109 @@
         }
         state.vfCounter++;
         var text = state.currentObsLineNode.textContent.trimEnd();
-        state.currentObsLineNode.textContent = text + ' (V.F. ' + state.vfCounter + ')';
+        // If already has a V.F. reference, append with /N instead of new parentheses
+        var vfMatch = text.match(/\(V\. F\.\s*([\d/]+)\)\s*$/);
+        if (vfMatch) {
+            var newRef = '(V. F. ' + vfMatch[1] + '/' + state.vfCounter + ')';
+            text = text.replace(/\(V\. F\.\s*[\d/]+\)\s*$/, newRef);
+            state.currentObsLineNode.textContent = text;
+        } else {
+            state.currentObsLineNode.textContent = text + ' (V. F. ' + state.vfCounter + ')';
+        }
         placeCaretAtEnd(state.currentObsLineNode);
+        scheduleSave();
     });
 
-    // --- FOTO VANO (placeholder Step 3) ---
+    // --- FOTO VANO --- FIX M1+R1: V.F. multipli anche per vano
     document.getElementById('btn-foto-vano').addEventListener('click', function () {
         if (!state.currentVanoHeaderNode) {
-            alert('Crea prima un vano');
+            alert('Crea prima un ambiente');
             return;
         }
-        alert('Foto vano: funzionalità in arrivo (Step 3)');
+        state.vfCounter++;
+        var text = state.currentVanoHeaderNode.textContent;
+        // If already has V.F., append /N
+        var vfMatch = text.match(/\(V\. F\.\s*([\d/]+)\)(;?\s*)$/);
+        if (vfMatch) {
+            var newRef = '(V. F. ' + vfMatch[1] + '/' + state.vfCounter + ')' + vfMatch[2];
+            text = text.replace(/\(V\. F\.\s*[\d/]+\)(;?\s*)$/, newRef);
+            state.currentVanoHeaderNode.textContent = text;
+        } else {
+            if (text.endsWith(';')) {
+                text = text.slice(0, -1).trimEnd();
+            }
+            state.currentVanoHeaderNode.textContent = text + ' (V. F. ' + state.vfCounter + ');';
+        }
+        placeCaretAtEnd(state.currentVanoHeaderNode);
+        scheduleSave();
     });
 
-    // --- ELIMINA FOTO (placeholder) ---
+    // --- ELIMINA FOTO ---
     document.getElementById('btn-elimina-foto-vano').addEventListener('click', function () {
-        alert('Elimina foto vano: funzionalità in arrivo (Step 3)');
+        if (!state.currentVanoHeaderNode) {
+            alert('Nessun ambiente attivo');
+            return;
+        }
+        var text = state.currentVanoHeaderNode.textContent;
+        // Remove last V.F. reference
+        var cleaned = text.replace(/\s*\(V\. F\.\s*\d+\)/, '');
+        if (cleaned !== text) {
+            state.currentVanoHeaderNode.textContent = cleaned;
+            state.vfCounter--;
+        }
     });
     document.getElementById('btn-elimina-foto-difetto').addEventListener('click', function () {
-        alert('Elimina foto difetto: funzionalità in arrivo (Step 3)');
+        if (!state.currentObsLineNode) {
+            alert('Nessuna riga di osservazione attiva');
+            return;
+        }
+        var text = state.currentObsLineNode.textContent;
+        var cleaned = text.replace(/\s*\(V\. F\.\s*\d+\)/, '');
+        if (cleaned !== text) {
+            state.currentObsLineNode.textContent = cleaned;
+            state.vfCounter--;
+        }
     });
 
-    // --- CHIUSURA ---
+    // --- CHIUSURA --- con scelta formula
     document.getElementById('btn-chiusura').addEventListener('click', function () {
         closeCurrentObsLine();
+        insertRestantiNdr();
         ensureVanoHeaderClosed();
-        // Inserisci esattamente una riga vuota prima della chiusura
-        var lastChild = foglio.lastChild;
-        var lastText = lastChild ? lastChild.textContent.trim() : '';
-        var lastIsBlank = lastChild && lastChild.innerHTML === '<br>';
-        if (lastText !== '' && !lastIsBlank) {
-            insertBlankLine();
+        while (foglio.lastChild) {
+            var lc = foglio.lastChild;
+            var isEmpty = (lc.innerHTML === '<br>') || (lc.textContent.trim() === '');
+            if (isEmpty) {
+                foglio.removeChild(lc);
+            } else {
+                break;
+            }
         }
-        insertLine('Il presente verbale viene letto e sottoscritto.');
+        insertBlankLine();
+        // Default: forma breve (13/17 verbali). Forma estesa: 4/17 verbali.
+        var closingText = state.closingFormula || 'Letto e sottoscritto.';
+        insertLine(closingText);
         placeCaretAtEnd(foglio.lastChild);
+        scheduleSave();
     });
 
-    // --- ESPORTA (placeholder) ---
+    // Toggle chiusura formula
+    var btnChiusuraToggle = document.getElementById('btn-chiusura-toggle');
+    if (btnChiusuraToggle) {
+        btnChiusuraToggle.addEventListener('click', function () {
+            if (!state.closingFormula || state.closingFormula === 'Letto e sottoscritto.') {
+                state.closingFormula = 'Il presente verbale viene letto e sottoscritto.';
+                btnChiusuraToggle.textContent = 'Formula: estesa';
+                btnChiusuraToggle.classList.add('selected');
+            } else {
+                state.closingFormula = 'Letto e sottoscritto.';
+                btnChiusuraToggle.textContent = 'Formula: breve';
+                btnChiusuraToggle.classList.remove('selected');
+            }
+        });
+    }
+
+    // --- ESPORTA ---
     document.getElementById('btn-esporta-verbale').addEventListener('click', function () {
         alert('Export verbale DOCX: funzionalità in arrivo (Step 4)');
     });
@@ -596,13 +1065,33 @@
         alert('Export allegato foto: funzionalità in arrivo (Step 4)');
     });
 
-    // --- SYNC (placeholder) ---
+    // --- SYNC ---
     document.getElementById('btn-sync').addEventListener('click', function () {
         alert('Sincronizzazione: funzionalità in arrivo (Step 5)');
     });
 
+    // --- NUOVO DOCUMENTO ---
+    var btnNuovo = document.getElementById('btn-nuovo-doc');
+    if (btnNuovo) {
+        btnNuovo.addEventListener('click', function () {
+            if (confirm('Vuoi iniziare un nuovo documento? Il documento corrente verrà salvato automaticamente.')) {
+                saveToLocal();
+                foglio.innerHTML = '';
+                state.vanoCount = 0;
+                state.vfCounter = 0;
+                state.unitType = null;
+                state.currentVanoHeaderNode = null;
+                state.vanoHeaderComplete = false;
+                state.hasObservationsInVano = false;
+                resetObsState();
+                deselectAll('unit-type');
+                localStorage.removeItem('compilatore_autosave');
+            }
+        });
+    }
+
     // ================================================================
-    // 8. PREVENZIONE ZOOM
+    // 12. PREVENZIONE ZOOM
     // ================================================================
 
     document.addEventListener('dblclick', function (e) {
@@ -612,9 +1101,56 @@
     });
 
     // ================================================================
-    // 9. INIT
+    // 13. INIT
     // ================================================================
 
+    // Try to restore previous session
+    var restored = loadFromLocal();
+    if (restored) {
+        // Highlight restored unit type
+        if (state.unitType) {
+            document.querySelectorAll('.unit-type').forEach(function (btn) {
+                if (btn.dataset.value === state.unitType) {
+                    btn.classList.add('selected');
+                }
+            });
+        }
+    }
+
     updateDynamicTabs();
+    updateSectionsVisibility();
+
+    // Watch for manual edits in the document
+    foglio.addEventListener('input', scheduleSave);
+
+    // ================================================================
+    // 14. GLOBAL RESET (for testing/simulation)
+    // ================================================================
+    window._resetAll = function () {
+        foglio.innerHTML = '';
+        state.unitType = null;
+        state.vanoCount = 0;
+        state.vfCounter = 0;
+        state.hasObservationsInVano = false;
+        state.currentVanoHeaderNode = null;
+        state.vanoHeaderComplete = false;
+        state.currentObsLineNode = null;
+        state.currentElement = null;
+        state.currentElementType = null;
+        state.obsLineOpen = false;
+        state.infissoType = null;
+        state.infissoWall = null;
+        state.ambienteMode = 'vano';
+        state.prospettoLetter = null;
+        state.scalaName = null;
+        state.scalaRampCount = 2;
+        state.scalaCurrentSubsection = null;
+        deselectAll('unit-type');
+        deselectAll('elem-btn');
+        deselectAll('infisso-btn');
+        localStorage.removeItem('compilatore_autosave');
+        updateDynamicTabs();
+        updateSectionsVisibility();
+    };
 
 })();
