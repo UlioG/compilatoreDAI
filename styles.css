@@ -239,34 +239,24 @@ body {
 }
 
 #foglio {
-    width: 100%;
-    max-width: 800px;
-    min-height: 100%;
+    width: 794px;
+    min-height: 1123px;
     background: #fff;
-    padding: 16px 20px;
-    padding-left: 60px;
+    padding: 141px 100px 40px 102px;
     font-family: 'Courier New', Courier, monospace;
-    font-size: 13px;
-    line-height: 19.5px;
+    font-size: 16px;
+    line-height: 37.8px;
+    letter-spacing: -1.47px;
     color: #000;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
-    border-radius: 2px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
     outline: none;
     white-space: pre-wrap;
     word-wrap: break-word;
-    /* Carta uso bollo: righe orizzontali */
-    background-image:
-        repeating-linear-gradient(
-            to bottom,
-            transparent,
-            transparent 18.5px,
-            #c8d8e8 18.5px,
-            #c8d8e8 19.5px
-        );
-    background-size: 100% 19.5px;
-    background-position: 0 16px;
-    /* Margine verticale sinistro (riga rossa) */
-    border-left: 2px solid #c08080;
+    /* Sfondo: immagine reale del Template.docx (foglio uso bollo) */
+    background-image: url('foglio-uso-bollo.png');
+    background-size: 794px 1123px;
+    background-repeat: repeat-y;
+    background-position: top left;
 }
 
 #foglio:empty::before {
@@ -277,7 +267,7 @@ body {
 
 /* Righe del documento */
 #foglio div {
-    min-height: 19.5px;
+    min-height: 37.8px;
 }
 
 /* Separatore sezioni nel tab Ambiente */
@@ -332,12 +322,9 @@ button, input {
     }
 
     #foglio {
-        padding: 10px 14px;
-        padding-left: 50px;
-        font-size: 12px;
-        line-height: 18px;
-        background-size: 100% 18px;
-        background-position: 0 10px;
+        /* Su iPad landscape riduce la scala per stare nello schermo */
+        transform: scale(0.75);
+        transform-origin: top left;
     }
 }
 
