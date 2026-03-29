@@ -246,8 +246,9 @@
     var tabs = document.querySelectorAll('.tab');
     var panels = document.querySelectorAll('.tab-panel');
 
-    var LINES_PER_PAGE = 25;
-    var PAGE_CONTENT_HEIGHT = LINES_PER_PAGE * 37.8; // 945px
+    var LINES_FIRST_PAGE = 24;  // 1 riga vuota (header) + 24 righe testo
+    var LINES_OTHER_PAGES = 25; // nessuna riga vuota, 25 righe testo
+    var LINE_HEIGHT = 38; // offsetHeight reale delle div (37.8 arrotondato dal browser)
 
     // Crea la prima pagina
     function createPage() {
@@ -266,14 +267,19 @@
         return foglio;
     }
 
+    function getPageMaxHeight(page) {
+        var isFirst = !page.previousElementSibling;
+        var maxLines = isFirst ? LINES_FIRST_PAGE : LINES_OTHER_PAGES;
+        return maxLines * LINE_HEIGHT;
+    }
+
     function isPageFull(page) {
-        // Controlla se il contenuto supera l'area utile della pagina
         var children = page.children;
         var totalHeight = 0;
         for (var i = 0; i < children.length; i++) {
-            totalHeight += children[i].offsetHeight || 37.8;
+            totalHeight += children[i].offsetHeight || LINE_HEIGHT;
         }
-        return totalHeight >= PAGE_CONTENT_HEIGHT;
+        return totalHeight >= getPageMaxHeight(page);
     }
 
     function ensureSpace() {
@@ -1205,25 +1211,30 @@
     // 15. PAGINAZIONE AUTOMATICA (MutationObserver)
     // ================================================================
 
+    function getContentHeight(page) {
+        var children = page.children;
+        var h = 0;
+        for (var i = 0; i < children.length; i++) {
+            h += children[i].offsetHeight || LINE_HEIGHT;
+        }
+        return h;
+    }
+
     function reflowPages() {
         var pages = pagesContainer.querySelectorAll('.page');
 
         pages.forEach(function (page) {
-            // Controlla se il contenuto supera l'altezza utile
-            while (page.scrollHeight > page.clientHeight && page.children.length > 1) {
-                // Sposta l'ultimo figlio alla pagina successiva
+            var maxH = getPageMaxHeight(page);
+            while (getContentHeight(page) > maxH && page.children.length > 1) {
                 var lastChild = page.lastElementChild;
                 var nextPage = page.nextElementSibling;
                 if (!nextPage || !nextPage.classList.contains('page')) {
                     nextPage = createPage();
-                    // NON aggiornare foglio qui — lo facciamo dopo
                 }
-                // Inserisci all'inizio della pagina successiva
                 nextPage.insertBefore(lastChild, nextPage.firstChild);
             }
         });
 
-        // Aggiorna foglio = ultima pagina
         var allPages = pagesContainer.querySelectorAll('.page');
         foglio = allPages[allPages.length - 1];
     }
