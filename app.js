@@ -232,7 +232,10 @@
         scalaCurrentSubsection: null,
 
         // Chiusura formula
-        closingFormula: 'Letto e sottoscritto.'
+        closingFormula: 'Letto e sottoscritto.',
+
+        // Paginazione
+        pageLineCount: 0
     };
 
     // ================================================================
@@ -247,7 +250,25 @@
     // 4. HELPERS DOM
     // ================================================================
 
+    var LINES_PER_PAGE = 25;
+
+    function insertPageBreak() {
+        var pb = document.createElement('div');
+        pb.className = 'page-break';
+        pb.setAttribute('contenteditable', 'false');
+        foglio.appendChild(pb);
+        state.pageLineCount = 0;
+    }
+
+    function addPageLine(count) {
+        state.pageLineCount = (state.pageLineCount || 0) + (count || 1);
+        if (state.pageLineCount >= LINES_PER_PAGE) {
+            insertPageBreak();
+        }
+    }
+
     function insertLine(text) {
+        addPageLine(1);
         var div = document.createElement('div');
         div.textContent = text;
         foglio.appendChild(div);
@@ -256,6 +277,7 @@
     }
 
     function insertBlankLine() {
+        addPageLine(1);
         var div = document.createElement('div');
         div.innerHTML = '<br>';
         foglio.appendChild(div);
@@ -1083,6 +1105,7 @@
                 state.currentVanoHeaderNode = null;
                 state.vanoHeaderComplete = false;
                 state.hasObservationsInVano = false;
+                state.pageLineCount = 0;
                 resetObsState();
                 deselectAll('unit-type');
                 localStorage.removeItem('compilatore_autosave');
@@ -1132,6 +1155,7 @@
         state.vanoCount = 0;
         state.vfCounter = 0;
         state.hasObservationsInVano = false;
+        state.pageLineCount = 0;
         state.currentVanoHeaderNode = null;
         state.vanoHeaderComplete = false;
         state.currentObsLineNode = null;

@@ -242,7 +242,7 @@ body {
     width: 794px;
     min-height: 1123px;
     background: #fff;
-    padding: 141px 100px 40px 102px;
+    padding: 141px 186px 40px 102px;
     font-family: 'Courier New', Courier, monospace;
     font-size: 16px;
     line-height: 37.8px;
@@ -257,6 +257,16 @@ body {
     background-size: 794px 1123px;
     background-repeat: repeat-y;
     background-position: top left;
+}
+
+/* Separatore pagina visivo (inserito da JS ogni 25 righe) */
+#foglio .page-break {
+    height: 178px; /* spazio footer + header pagina successiva: 37px bottom + 141px top */
+    min-height: 178px;
+    line-height: 178px;
+    border: none;
+    pointer-events: none;
+    user-select: none;
 }
 
 #foglio:empty::before {
