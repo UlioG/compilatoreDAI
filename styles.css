@@ -263,7 +263,7 @@ body {
 }
 
 .page:first-child:empty::before {
-    content: "Seleziona il tipo di unit\00E0 per iniziare...";
+    content: "Seleziona il tipo di unit\00E0  per iniziare...";
     color: #aaa;
     font-style: italic;
 }
