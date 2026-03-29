@@ -246,9 +246,8 @@
     var tabs = document.querySelectorAll('.tab');
     var panels = document.querySelectorAll('.tab-panel');
 
-    var LINES_FIRST_PAGE = 24;  // 1 riga vuota (header) + 24 righe testo
-    var LINES_OTHER_PAGES = 25; // nessuna riga vuota, 25 righe testo
-    var LINE_HEIGHT = 38; // offsetHeight reale delle div (37.8 arrotondato dal browser)
+    var LINES_PER_PAGE = 24; // 1 riga vuota (header) + 24 righe testo per ogni pagina
+    var LINE_HEIGHT = 38;  // offsetHeight reale delle div (37.8 arrotondato dal browser)
 
     // Crea la prima pagina
     function createPage() {
@@ -267,10 +266,8 @@
         return foglio;
     }
 
-    function getPageMaxHeight(page) {
-        var isFirst = !page.previousElementSibling;
-        var maxLines = isFirst ? LINES_FIRST_PAGE : LINES_OTHER_PAGES;
-        return maxLines * LINE_HEIGHT;
+    function getPageMaxHeight() {
+        return LINES_PER_PAGE * LINE_HEIGHT;
     }
 
     function isPageFull(page) {
@@ -279,7 +276,7 @@
         for (var i = 0; i < children.length; i++) {
             totalHeight += children[i].offsetHeight || LINE_HEIGHT;
         }
-        return totalHeight >= getPageMaxHeight(page);
+        return totalHeight >= getPageMaxHeight();
     }
 
     function ensureSpace() {
@@ -1224,7 +1221,7 @@
         var pages = pagesContainer.querySelectorAll('.page');
 
         pages.forEach(function (page) {
-            var maxH = getPageMaxHeight(page);
+            var maxH = getPageMaxHeight();
             while (getContentHeight(page) > maxH && page.children.length > 1) {
                 var lastChild = page.lastElementChild;
                 var nextPage = page.nextElementSibling;
