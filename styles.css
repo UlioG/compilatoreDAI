@@ -233,16 +233,21 @@ body {
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     background: #e8e8e8;
-    padding: 8px;
-    display: flex;
-    justify-content: center;
+    padding: 16px 8px;
 }
 
-#foglio {
+#pages-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+.page {
     width: 794px;
-    min-height: 1123px;
-    background: #fff;
-    padding: 141px 186px 40px 102px;
+    height: 1123px;
+    background: #fff url('foglio-uso-bollo.png') top left / 794px 1123px no-repeat;
+    padding: 103.35px 186px 74.65px 102px;
     font-family: 'Courier New', Courier, monospace;
     font-size: 16px;
     line-height: 37.8px;
@@ -253,34 +258,18 @@ body {
     white-space: pre-wrap;
     word-wrap: break-word;
     overflow-wrap: break-word;
-    /* Forza il testo a spezzarsi entro il padding, scroll verticale ok */
-    overflow-x: hidden;
-    overflow-y: visible;
-    /* Sfondo: immagine reale del Template.docx (foglio uso bollo) */
-    background-image: url('foglio-uso-bollo.png');
-    background-size: 794px 1123px;
-    background-repeat: repeat-y;
-    background-position: top left;
+    overflow: hidden;
+    flex-shrink: 0;
 }
 
-/* Separatore pagina visivo (inserito da JS ogni 25 righe) */
-#foglio .page-break {
-    height: 178px; /* spazio footer + header pagina successiva: 37px bottom + 141px top */
-    min-height: 178px;
-    line-height: 178px;
-    border: none;
-    pointer-events: none;
-    user-select: none;
-}
-
-#foglio:empty::before {
+.page:first-child:empty::before {
     content: "Seleziona il tipo di unit\00E0 per iniziare...";
     color: #aaa;
     font-style: italic;
 }
 
 /* Righe del documento */
-#foglio div {
+.page div {
     min-height: 37.8px;
 }
 
@@ -335,10 +324,9 @@ button, input {
         width: 80px;
     }
 
-    #foglio {
-        /* Su iPad landscape riduce la scala per stare nello schermo */
+    .page {
         transform: scale(0.75);
-        transform-origin: top left;
+        transform-origin: top center;
     }
 }
 

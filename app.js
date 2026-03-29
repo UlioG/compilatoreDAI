@@ -239,36 +239,55 @@
     };
 
     // ================================================================
-    // 3. DOM REFERENCES
+    // 3. DOM REFERENCES & PAGINAZIONE
     // ================================================================
 
-    var foglio = document.getElementById('foglio');
+    var pagesContainer = document.getElementById('pages-container');
     var tabs = document.querySelectorAll('.tab');
     var panels = document.querySelectorAll('.tab-panel');
+
+    var LINES_PER_PAGE = 25;
+    var PAGE_CONTENT_HEIGHT = LINES_PER_PAGE * 37.8; // 945px
+
+    // Crea la prima pagina
+    function createPage() {
+        var page = document.createElement('div');
+        page.className = 'page';
+        page.setAttribute('contenteditable', 'true');
+        page.setAttribute('spellcheck', 'true');
+        pagesContainer.appendChild(page);
+        return page;
+    }
+
+    // Pagina corrente (l'ultima)
+    var foglio = createPage();
+
+    function getCurrentPage() {
+        return foglio;
+    }
+
+    function isPageFull(page) {
+        // Controlla se il contenuto supera l'area utile della pagina
+        var children = page.children;
+        var totalHeight = 0;
+        for (var i = 0; i < children.length; i++) {
+            totalHeight += children[i].offsetHeight || 37.8;
+        }
+        return totalHeight >= PAGE_CONTENT_HEIGHT;
+    }
+
+    function ensureSpace() {
+        if (isPageFull(foglio)) {
+            foglio = createPage();
+        }
+    }
 
     // ================================================================
     // 4. HELPERS DOM
     // ================================================================
 
-    var LINES_PER_PAGE = 25;
-
-    function insertPageBreak() {
-        var pb = document.createElement('div');
-        pb.className = 'page-break';
-        pb.setAttribute('contenteditable', 'false');
-        foglio.appendChild(pb);
-        state.pageLineCount = 0;
-    }
-
-    function addPageLine(count) {
-        state.pageLineCount = (state.pageLineCount || 0) + (count || 1);
-        if (state.pageLineCount >= LINES_PER_PAGE) {
-            insertPageBreak();
-        }
-    }
-
     function insertLine(text) {
-        addPageLine(1);
+        ensureSpace();
         var div = document.createElement('div');
         div.textContent = text;
         foglio.appendChild(div);
@@ -277,7 +296,7 @@
     }
 
     function insertBlankLine() {
-        addPageLine(1);
+        ensureSpace();
         var div = document.createElement('div');
         div.innerHTML = '<br>';
         foglio.appendChild(div);
@@ -285,7 +304,8 @@
     }
 
     function placeCaretAtEnd(node) {
-        foglio.focus();
+        var page = node.closest('.page') || foglio;
+        page.focus();
         var range = document.createRange();
         var sel = window.getSelection();
         range.selectNodeContents(node);
@@ -377,7 +397,7 @@
     function saveToLocal() {
         try {
             var data = {
-                html: foglio.innerHTML,
+                html: pagesContainer.innerHTML,
                 vanoCount: state.vanoCount,
                 vfCounter: state.vfCounter,
                 unitType: state.unitType,
@@ -393,7 +413,9 @@
             if (!raw) return false;
             var data = JSON.parse(raw);
             if (data.html) {
-                foglio.innerHTML = data.html;
+                pagesContainer.innerHTML = data.html;
+                var pages = pagesContainer.querySelectorAll('.page');
+                foglio = pages.length ? pages[pages.length - 1] : createPage();
                 state.vanoCount = data.vanoCount || 0;
                 state.vfCounter = data.vfCounter || 0;
                 state.unitType = data.unitType || null;
@@ -1098,7 +1120,8 @@
         btnNuovo.addEventListener('click', function () {
             if (confirm('Vuoi iniziare un nuovo documento? Il documento corrente verrà salvato automaticamente.')) {
                 saveToLocal();
-                foglio.innerHTML = '';
+                pagesContainer.innerHTML = '';
+                foglio = createPage();
                 state.vanoCount = 0;
                 state.vfCounter = 0;
                 state.unitType = null;
@@ -1144,13 +1167,14 @@
     updateSectionsVisibility();
 
     // Watch for manual edits in the document
-    foglio.addEventListener('input', scheduleSave);
+    pagesContainer.addEventListener('input', scheduleSave);
 
     // ================================================================
     // 14. GLOBAL RESET (for testing/simulation)
     // ================================================================
     window._resetAll = function () {
-        foglio.innerHTML = '';
+        pagesContainer.innerHTML = '';
+        foglio = createPage();
         state.unitType = null;
         state.vanoCount = 0;
         state.vfCounter = 0;
@@ -1181,48 +1205,42 @@
     // 15. PAGINAZIONE AUTOMATICA (MutationObserver)
     // ================================================================
 
-    // Ricalcola i page break basandosi sulle posizioni reali dei div
-    function recalcPageBreaks() {
-        // Rimuovi page break esistenti
-        foglio.querySelectorAll('.page-break').forEach(function (pb) {
-            pb.remove();
+    function reflowPages() {
+        var pages = pagesContainer.querySelectorAll('.page');
+
+        pages.forEach(function (page) {
+            // Controlla se il contenuto supera l'altezza utile
+            while (page.scrollHeight > page.clientHeight && page.children.length > 1) {
+                // Sposta l'ultimo figlio alla pagina successiva
+                var lastChild = page.lastElementChild;
+                var nextPage = page.nextElementSibling;
+                if (!nextPage || !nextPage.classList.contains('page')) {
+                    nextPage = createPage();
+                    // NON aggiornare foglio qui — lo facciamo dopo
+                }
+                // Inserisci all'inizio della pagina successiva
+                nextPage.insertBefore(lastChild, nextPage.firstChild);
+            }
         });
 
-        var children = Array.from(foglio.children);
-        var pageHeight = 1123; // altezza pagina in px
-        var firstLineY = 141;  // padding-top = dove inizia il testo
-        var bottomMargin = 37; // margine fondo pagina
-        var usableHeight = pageHeight - firstLineY - bottomMargin; // ~945px = 25 righe
-        var currentY = 0;
-
-        for (var i = 0; i < children.length; i++) {
-            var child = children[i];
-            var h = child.offsetHeight || 37.8;
-            currentY += h;
-
-            if (currentY > usableHeight) {
-                // Inserisci page break prima di questo elemento
-                var pb = document.createElement('div');
-                pb.className = 'page-break';
-                pb.setAttribute('contenteditable', 'false');
-                foglio.insertBefore(pb, child);
-                currentY = h; // reset per nuova pagina
-            }
-        }
+        // Aggiorna foglio = ultima pagina
+        var allPages = pagesContainer.querySelectorAll('.page');
+        foglio = allPages[allPages.length - 1];
     }
 
-    // Debounce per non ricalcolare ad ogni keystroke
-    var pageBreakTimer = null;
-    function schedulePageBreakRecalc() {
-        if (pageBreakTimer) clearTimeout(pageBreakTimer);
-        pageBreakTimer = setTimeout(recalcPageBreaks, 300);
+    var reflowTimer = null;
+    function scheduleReflow() {
+        if (reflowTimer) clearTimeout(reflowTimer);
+        reflowTimer = setTimeout(reflowPages, 200);
     }
 
-    // Osserva cambiamenti nel foglio (anche testo scritto a mano)
+    // Osserva cambiamenti su TUTTE le pagine
     var observer = new MutationObserver(function () {
-        schedulePageBreakRecalc();
+        scheduleReflow();
     });
-    observer.observe(foglio, {
+
+    // Osserva il container per nuove pagine
+    observer.observe(pagesContainer, {
         childList: true,
         subtree: true,
         characterData: true
