@@ -252,6 +252,9 @@ body {
     outline: none;
     white-space: pre-wrap;
     word-wrap: break-word;
+    overflow-wrap: break-word;
+    /* Forza il testo a spezzarsi entro il padding */
+    overflow: hidden;
     /* Sfondo: immagine reale del Template.docx (foglio uso bollo) */
     background-image: url('foglio-uso-bollo.png');
     background-size: 794px 1123px;
